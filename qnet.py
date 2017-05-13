@@ -1,3 +1,4 @@
+from config import *
 import numpy as np
 import tensorflow as tf
 
@@ -28,7 +29,7 @@ class QNet(object):
         self.Qn = tf.placeholder(shape=[None,1], dtype=tf.float32)
         loss = tf.reduce_sum(tf.square(self.Qn - self.Q))
         #trainer = tf.train.GradientDescentOptimizer(learning_rate=0.0001)
-        trainer = tf.train.AdamOptimizer(learning_rate=1e-4)
+        trainer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)
 
         self.update = trainer.minimize(loss)
 

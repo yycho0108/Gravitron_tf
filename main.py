@@ -10,20 +10,6 @@ from qnet import *
 from layers import *
 from gravitron import Gravitron
 
-## Load Parameters
-gamma = .99 #Discount factor.
-num_episodes = 10000 #Total number of episodes to train network for.
-test_episodes = 200 #Total number of episodes to train network for.
-tau = 0.001 #Amount to update target network at each step.
-batch_size = 128 #Size of training batch
-
-eps_start = 1 #Starting chance of random action
-eps_end = 0.05 #Final chance of random action
-annealing_steps = 200000 #How many steps of training to reduce startE to endE.
-eps_delta = (eps_end - eps_start) / annealing_steps
-
-pre_train_steps = 50000 #Number of steps us
-
 ## Initialize Tensorflow
 tf.reset_default_graph()
 session = tf.Session()
@@ -32,7 +18,7 @@ env = Gravitron()
 
 def train(net, target_net, memory, episodes):
 
-    eps = eps_start
+    eps = EPS_START
     step = 0
     rewards = []
 
@@ -49,22 +35,22 @@ def train(net, target_net, memory, episodes):
 
             s1,r,d,_ = env.step(a)
             memory.add({'s0':s0, 'a':a, 'r':r, 's1':s1, 'd':d})
-            if step > pre_train_steps:
-                if eps > eps_end:
-                    eps += eps_delta
+            if step > PRE_TRAIN_STEPS:
+                if eps > EPS_END:
+                    eps += EPS_DELTA 
                 if step % 5 == 0:
-                    input_batch = memory.sample(batch_size)
-                    _s0 = input_batch['s0'].astype(np.uint8)
+                    input_batch = memory.sample(BATCH_SIZE)
+                    _s0 = input_batch['s0']
                     _a = input_batch['a']
                     _r = input_batch['r']
-                    _s1 = input_batch['s1'].astype(np.uint8)
+                    _s1 = input_batch['s1']
                     _d = input_batch['d']
 
                     # s1 = (4,32), --> (x,32)
                     a_s1 = session.run(net.predict, feed_dict={net.inputs : _s1})
                     q_s1 = session.run(target_net._Q, feed_dict={target_net.inputs : _s1})
                     q = q_s1[range(batch_size), a_s1].reshape((batch_size,-1))
-                    target_q = _r + gamma * q * (1 - _d)
+                    target_q = _r + GAMMA * q * (1 - _d)
                     _ = session.run(net.update, feed_dict = {net.inputs : _s0, net.Qn:target_q, net.actions:_a})
                     session.run(copy_ops)
             net_reward += r
@@ -79,9 +65,9 @@ def train(net, target_net, memory, episodes):
         net_reward, eps, step = train_once(eps, step)
         rewards.append(net_reward)
 
-        if i % 10 == 0 and i > 0:
+        if i % 50 == 0 and i > 0:
             r_mean = np.mean(rewards[-100:])
-            print "Epoch : %d, Mean Reward: %f; Step : %d, Epsilon: %f" % (i, r_mean, step, eps)
+            print "Epoch : %d, Mean Reward: %f; Step : %d, Epsilon: %f; Test: %f" % (i, r_mean, step, eps, test(target_net,1)[0])
         i += 1
 
     if raw_input('Train Until Convergence?\n').lower() == 'y':
@@ -91,7 +77,7 @@ def train(net, target_net, memory, episodes):
 
             if i % 10 == 0 and i > 0:
                 r_mean = np.mean(rewards[-100:])
-                print "Epoch : %d, Mean Reward: %f; Step : %d, Epsilon: %f" % (i, r_mean, step, eps)
+                print "Epoch : %d, Mean Reward: %f; Step : %d, Epsilon: %f; Test: %f" % (i, r_mean, step, eps, test(target_net,1)[0])
             i += 1
 
 
@@ -106,7 +92,7 @@ def test(net, episodes):
         d = False
         net_reward = 0
         while not d:
-            env.render()
+            #env.render()
             a = session.run(net.predict, feed_dict={net.inputs:[s]})
             a = a[0]
             s,r,d,_ = env.step(a)
@@ -119,7 +105,7 @@ def setup():
     state_size = reduce(lambda x,y:x*y, env.observation_space.shape)
 
     # initialize memory
-    memory = MultiMemory(pre_train_steps)
+    memory = MultiMemory(MEM_SIZE)
     def create_network():
         net = QNet((WIN_H,WIN_W,1))
         net.append(ConvolutionLayer((3,3,1,4)))
@@ -144,7 +130,7 @@ def main():
     global copy_ops
 
     net, target_net, memory = setup()
-    copy_ops = net.copyTo(target_net, tau)
+    copy_ops = net.copyTo(target_net, TAU)
 
     # get this started...
     session.run(tf.global_variables_initializer())
@@ -155,12 +141,12 @@ def main():
         saver.restore(session, '/tmp/model.ckpt')
         print '[loaded]'
     else:
-        train_rewards = train(net, target_net, memory, num_episodes)
+        train_rewards = train(net, target_net, memory, NUM_EPISODES)
         np.savetxt('train.csv', train_rewards, delimiter=',', fmt='%f')
         save_path = saver.save(session, '/tmp/model.ckpt')
         print("Model saved in file: %s" % save_path) 
 
-    test_rewards = test(net, test_episodes)
+    test_rewards = test(net,TEST_EPISODES)
     np.savetxt('test.csv', test_rewards, delimiter=',', fmt='%f')
 
 if __name__ == "__main__":

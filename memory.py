@@ -24,7 +24,7 @@ class Memory(object):
 class MultiMemory(object): # assumes that all data can at least be represented by floats
     def __init__(self, size=1000):
         self.memory = {}
-        self.size = size
+        self.size = int(size)
         self.index = 0
         self.full = False
 

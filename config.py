@@ -11,7 +11,7 @@ BALL_R = 24/SCALE
 BALL_GAP = 16/SCALE
 
 BALL_SPEED = 24/SCALE
-BALL_SPAWN_PERIOD = 25 #TIME! not length.
+BALL_SPAWN_PERIOD = 25 #TIME! not length, no scale
 
 CHAR_SPEED_X = 16/SCALE
 CHAR_SPEED_Y = 16/SCALE
@@ -24,7 +24,7 @@ TAU = 1./UPDATE_FREQ # For Soft Update, Use Tau instead
 LEARNING_RATE = 2e-4 # Learning Rate for Adam Optimizer
 EPS_START = 1.0
 EPS_END = 0.05
-ANNEAL_STEPS = 2e5 # Number of Annealing Steps for Epsilon Decay
+ANNEAL_STEPS = 1e6 # Number of Annealing Steps for Epsilon Decay
 PRE_TRAIN_STEPS = 5e4 # Pre-Training to Populate Replay memory
 EPS_DELTA = (EPS_END - EPS_START)/ANNEAL_STEPS
 

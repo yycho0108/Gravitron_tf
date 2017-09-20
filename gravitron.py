@@ -116,7 +116,7 @@ class Gravitron(gym.Env):
         self.draw()
         self.time += 1
 
-        reward = -1 if done else 0.001#?
+        reward = 0.001 #-1 if done else 0.001#?
         return self.state(), reward, done, {}
 
     def _render(self, mode='human', close=False):

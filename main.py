@@ -27,7 +27,7 @@ def train(net, target_net, memory, episodes):
         net_reward = 0
         d = False
         while not d:
-            if np.random.rand(1) < eps or step < pre_train_steps:
+            if np.random.rand(1) < eps or step < PRE_TRAIN_STEPS:
                 a = env.action_space.sample()
             else:
                 a = session.run(net.predict, feed_dict={net.inputs:[s0]})
@@ -49,7 +49,7 @@ def train(net, target_net, memory, episodes):
                     # s1 = (4,32), --> (x,32)
                     a_s1 = session.run(net.predict, feed_dict={net.inputs : _s1})
                     q_s1 = session.run(target_net._Q, feed_dict={target_net.inputs : _s1})
-                    q = q_s1[range(batch_size), a_s1].reshape((batch_size,-1))
+                    q = q_s1[range(BATCH_SIZE), a_s1].reshape((BATCH_SIZE,-1))
                     target_q = _r + GAMMA * q * (1 - _d)
                     _ = session.run(net.update, feed_dict = {net.inputs : _s0, net.Qn:target_q, net.actions:_a})
                     session.run(copy_ops)
@@ -107,12 +107,12 @@ def setup():
     # initialize memory
     memory = MultiMemory(MEM_SIZE)
     def create_network():
-        net = QNet((WIN_H,WIN_W,1))
-        net.append(ConvolutionLayer((3,3,1,4)))
-        net.append(ActivationLayer('relu'))
-        net.append(DenseLayer((WIN_H*WIN_W*4,256)))
-        net.append(ActivationLayer('relu'))
-        net.append(DenseLayer((256,3)))
+        net = ACNet((WIN_H,WIN_W,1), 3)
+        #net.append(ConvolutionLayer((3,3,1,4)))
+        #net.append(ActivationLayer('relu'))
+        #net.append(DenseLayer((WIN_H*WIN_W*4,256)))
+        #net.append(ActivationLayer('relu'))
+        #net.append(DenseLayer((256,3)))
         #net.append(ActivationLayer('relu'))
         net.setup()
         return net
